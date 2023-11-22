@@ -1,0 +1,37 @@
+version: '3.8'
+services:
+  app:
+    container_name: app
+    image: node:18
+    ports:
+      - 3000:3000
+    volumes:
+      - ./:/usr/src/app
+    working_dir: /usr/src/app
+    command: npm run start:dev
+
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: parvy
+      POSTGRES_PASSWORD: parvy123
+      POSTGRES_DB: parvy_db
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+
+  redis:
+    container_name: redis
+    image: redis:latest
+    restart: always
+    volumes:
+      - ./redis_data:/data
+    ports:
+      - '6000:6000'
+
+volumes:
+  postgres_data:
+  redis_data:

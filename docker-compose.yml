@@ -1,15 +1,17 @@
 version: '3.8'
 services:
   app:
+    container_name: app
     image: node:18
     ports:
-      - 8081:3000
+      - 3000:3000
     volumes:
       - ./:/usr/src/app
     working_dir: /usr/src/app
     command: npm run start:dev
 
   postgres:
+    container_name: postgres
     image: postgres:latest
     restart: always
     environment:
@@ -22,6 +24,7 @@ services:
       - '5432:5432'
 
   redis:
+    container_name: redis
     image: redis:latest
     restart: always
     volumes:

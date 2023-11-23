@@ -1,7 +1,5 @@
 import { Controller, Get, Inject, Param } from '@nestjs/common';
 import { JoinRoomService } from './joinRoom.service';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import type { CacheIORedis } from 'src/app.module';
 
 @Controller()
 export class JoinRoomController {

@@ -12,11 +12,11 @@ export class CreateRoomService {
   async getCreateRoom(): Promise<{}> {
     const client = this.cacheManager.store.getClient();
 
-    const roomCode = this.generateRoomCode(client);
-    const room = new Room({
+    const roomCode = await this.generateRoomCode();
+    const room: Room = {
       code: roomCode,
       state: 'en attente',
-    });
+    };
 
     const redisRoom = await client.hset(
       room.code, 
@@ -33,28 +33,35 @@ export class CreateRoomService {
   }
 
   // Génération aléatoire du code de la partie (code à 6 chiffres)
-  generateRoomCode(client): string {
+  private async generateRoomCode(): Promise<string> {
     const min = 0;
     const max = 9;
 
-    const roomCode = [
-      randomInt(min, max),
-      randomInt(min, max),
-      randomInt(min, max),
-      randomInt(min, max),
-      randomInt(min, max),
-      randomInt(min, max),
-    ];
+    let i = 0;
 
-    this.verifyRoomCode(client, roomCode);
+    while(i < 1000) {
+      const roomCode = [
+        randomInt(min, max),
+        randomInt(min, max),
+        randomInt(min, max),
+        randomInt(min, max),
+        randomInt(min, max),
+        randomInt(min, max),
+      ].join('');
+
+      if (await this.isRoomCodeFree(roomCode)) {
+        return roomCode;
+      }
+
+      i++;
+    }
     
-    return roomCode.join('');
+    throw new Error('Unable to generate a room code');
   }
 
   //Vérifier que le code de room n'existe pas
-  verifyRoomCode(client, generatedCode): void {
-    if (client.hget(generatedCode)) {
-      this.generateRoomCode(client);
-    }
+  private async isRoomCodeFree(generatedCode: string): Promise<boolean> {
+    const client = this.cacheManager.store.getClient();
+    return (await client.exists(generatedCode)) === 0
   }
 }

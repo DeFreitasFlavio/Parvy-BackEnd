@@ -6,17 +6,15 @@ import { CacheIORedis } from 'src/app.module';
 export class JoinRoomService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: CacheIORedis) {}
 
-  async getJoinRoom(code): Promise<string> {
+  async getJoinRoom(code: string): Promise<string> {
 
     const client = this.cacheManager.store.getClient();
 
-    const existRoom = await client.smembers('room/'+code);
-    const existRoomState = await client.smembers('room/'+code+'/state');
-    
-    if (existRoom.length > 0) {
-      return 'La room : ' + code + ' est ' + existRoomState;
-    } else {
+    if (await client.exists(code) === 0) {
       return 'Le code de la room est incorrect.';
+    } else {
+      const roomDatas = await client.hgetall(code);
+      return 'Vous avez rejoins la room ' + roomDatas.code + '. Elle est ' + roomDatas.state;
     }
   }
 }

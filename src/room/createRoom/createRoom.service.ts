@@ -18,11 +18,11 @@ export class CreateRoomService {
       state: 'en attente',
     };
 
-    const redisRoom = await client.hset(
+    await client.hset(
       room.code, 
       'code', room.code, 
       'state', room.state
-      );
+    );
 
     const response = {
       response: 'ok',

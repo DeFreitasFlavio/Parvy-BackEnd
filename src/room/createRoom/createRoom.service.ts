@@ -13,6 +13,11 @@ export class CreateRoomService {
   async getCreateRoom(idPlayer: string): Promise<{}> {
     const client = this.cacheManager.store.getClient();
 
+    // Si l'id du player passé en parametre n'existe pas dans le cache
+    if (await client.exists(idPlayer) === 0) {
+      throw new Error('Id player incorrect');
+    }
+
     const roomCode = await this.generateRoomCode();
     const room: Room = {
       code: roomCode,

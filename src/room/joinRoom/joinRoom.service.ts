@@ -11,7 +11,7 @@ export class JoinRoomService {
     const client = this.cacheManager.store.getClient();
 
     if (await client.exists(code) === 0) {
-      return 'Le code de la room est incorrect.';
+      throw new Error('Code room incorrect');
     } else {
       const roomDatas = await client.hgetall(code);
       return 'Vous avez rejoins la room ' + roomDatas.code + '. Elle est ' + roomDatas.state;

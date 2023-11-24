@@ -7,6 +7,12 @@ export class CreateRoomController {
 
   @Get(':idPlayer')
   getCreateRoom(@Param('idPlayer') idPlayer: string): Promise<{}> {
-    return this.CreateRoomService.getCreateRoom(idPlayer);
+
+    if (idPlayer.length === 8) {
+      return this.CreateRoomService.getCreateRoom(idPlayer);
+    } else {
+      throw new Error('Bad id player parameter');
+    }
+    
   }
 }

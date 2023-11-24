@@ -21,12 +21,12 @@ export class JoinRoomService {
 
     await client.lpush(code+'/players', idPlayer);
 
-    const roomDatas = await client.hgetall(code);
+    const room = await client.hgetall(code);
     const listPlayers = await client.lrange(code + '/players', 0, -1);
 
     const response = {
       response: 'ok',
-      roomDatas,
+      room,
       listPlayers
     };
 

@@ -66,4 +66,20 @@ export class CreatePlayerService {
     const client = this.cacheManager.store.getClient();
     return (await client.exists(generatedCode)) === 0
   }
+
+  async postPlayerLeaveRoom(code: string, idPlayer: string) {
+    const client = this.cacheManager.store.getClient();
+
+    if (!(await client.exists(code)) || !(await client.exists(idPlayer))) {
+      throw new Error('Invalid settings.');
+    }
+
+    await client.srem(code+'/players', idPlayer);
+    await client.hdel(idPlayer, 'currentRoomCode');
+
+    // S'il n'y a plus de players dans la room, elle se delete
+    if (!(await client.exists(code+'/players'))) {
+      await client.del(code);
+    }
+  }
 }

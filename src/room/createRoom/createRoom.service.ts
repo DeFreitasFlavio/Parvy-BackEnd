@@ -3,7 +3,6 @@ import { randomInt } from 'crypto';
 import { Room } from '../../models/room.model';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { CacheIORedis } from 'src/app.module';
-import { Player } from 'src/models/player.model';
 
 
 @Injectable()
@@ -27,19 +26,19 @@ export class CreateRoomService {
 
     // Insertion de la room créée dans le cache
     await client.hset(
-      room.code, 
-      'code', room.code, 
-      'state', room.state
-    );
+      room.code, {
+      'code': room.code, 
+      'state': room.state
+    });
 
     // Insertion du joueur dans le cache qui a créé la room dans une liste de joueurs liée à la room
-    await client.lpush(room.code+'/players', idPlayer);
+    await client.sadd(room.code+'/players', idPlayer, idPlayer);
 
     // Insertion du code room dans le cache du player qui l'a créée
     await client.hset(idPlayer, 'currentRoomCode', room.code);
 
     // const roomCache = await client.hgetall(room.code);
-    const roomPlayersCache = await client.lrange(room.code + '/players', 0, -1);
+    // const roomPlayersCache = await client.lrange(room.code + '/players', 0, -1);
 
     const response = {
       response: 'ok',

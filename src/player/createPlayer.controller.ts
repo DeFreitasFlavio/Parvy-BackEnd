@@ -1,12 +1,13 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { CreatePlayerService } from './createPlayer.service';
+import { Player } from 'src/models/player.model';
 
-@Controller()
+@Controller('/createPlayer')
 export class CreatePlayerController {
   constructor(private readonly CreatePlayerService: CreatePlayerService) {}
 
-  @Get('/Createplayer')
-  getCreatePlayer(): void {
-    return this.CreatePlayerService.getCreatePlayer();
+  @Get(':pseudo')
+  async getCreatePlayer(@Param('pseudo') pseudo: string): Promise<{}> {
+    return this.CreatePlayerService.getCreatePlayer(pseudo);
   }
 }

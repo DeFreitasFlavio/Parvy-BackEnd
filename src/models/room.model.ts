@@ -8,5 +8,5 @@ export interface Room {
     totalCards: number,
     list: Card[]
   };
-  players?: Player[]; /* liste des joueurs dans la partie */
+  playersId?: string[]; /* liste des joueurs dans la partie */
 }

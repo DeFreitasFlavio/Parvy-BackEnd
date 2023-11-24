@@ -1,12 +1,12 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { CreateRoomService } from './createRoom.service';
 
-@Controller()
+@Controller('/CreateRoom')
 export class CreateRoomController {
   constructor(private readonly CreateRoomService: CreateRoomService) {}
 
-  @Get('/CreateRoom')
-  getCreateRoom(): Promise<{}> {
-    return this.CreateRoomService.getCreateRoom();
+  @Get(':idPlayer')
+  getCreateRoom(@Param('idPlayer') idPlayer: string): Promise<{}> {
+    return this.CreateRoomService.getCreateRoom(idPlayer);
   }
 }

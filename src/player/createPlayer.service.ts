@@ -9,7 +9,61 @@ import type { CacheIORedis } from 'src/app.module';
 export class CreatePlayerService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: CacheIORedis) {}
 
-  getCreatePlayer(): void {
+  async getCreatePlayer(pseudo: string): Promise<{}> {
+    const client = this.cacheManager.store.getClient();
 
+    const playerId = await this.generatePlayerid();
+    const player: Player = {
+      id: playerId,
+      pseudo: pseudo,
+    };
+
+    await client.hset(
+      playerId, 
+      'id', playerId, 
+      'pseudo', pseudo
+    );
+
+    const response = {
+      response: 'ok',
+      player
+    }
+
+    return response;
+  }
+
+  // Génération aléatoire du code de la partie (code à 6 chiffres)
+  private async generatePlayerid(): Promise<string> {
+    const min = 0;
+    const max = 9;
+
+    let i = 0;
+
+    while(i < 1000) {
+      const playerId = [
+        randomInt(min, max),
+        randomInt(min, max),
+        randomInt(min, max),
+        randomInt(min, max),
+        randomInt(min, max),
+        randomInt(min, max),
+        randomInt(min, max),
+        randomInt(min, max),
+      ].join('');
+
+      if (await this.isPlayerIdFree(playerId)) {
+        return playerId;
+      }
+
+      i++;
+    }
+    
+    throw new Error('Unable to generate a player id');
+  }
+
+  //Vérifier que le code de room n'existe pas
+  private async isPlayerIdFree(generatedCode: string): Promise<boolean> {
+    const client = this.cacheManager.store.getClient();
+    return (await client.exists(generatedCode)) === 0
   }
 }

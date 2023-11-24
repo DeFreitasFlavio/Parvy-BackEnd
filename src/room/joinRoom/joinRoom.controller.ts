@@ -6,11 +6,11 @@ export class JoinRoomController {
   constructor(private readonly JoinRoomService: JoinRoomService){};
 
   @Get()
-  async getCreateRoom(@Query('code') code: string, @Query('idPlayer') idPlayer: string): Promise<string> {
+  async getCreateRoom(@Query('code') code: string, @Query('idPlayer') idPlayer: string): Promise<{}> {
     if (code.length !== 6 || idPlayer.length !== 8) {
       throw new Error("Incorrects settings !");
     } else {
-      return this.JoinRoomService.getJoinRoom(code);
+      return this.JoinRoomService.getJoinRoom(code, idPlayer);
     }
   }
 }

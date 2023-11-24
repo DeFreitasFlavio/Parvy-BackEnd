@@ -12,9 +12,9 @@ export class JoinRoomService {
 
     if (await client.exists(code) === 0) {
       throw new Error('Code room incorrect');
-    } else {
-      const roomDatas = await client.hgetall(code);
-      return 'Vous avez rejoins la room ' + roomDatas.code + '. Elle est ' + roomDatas.state;
     }
+
+    const roomDatas = await client.hgetall(code);
+    return 'Vous avez rejoins la room ' + roomDatas.code + '. Elle est ' + roomDatas.state;
   }
 }

@@ -1,12 +1,12 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { CreatePlayerService } from './createPlayer.service';
 
 @Controller('/createPlayer')
 export class CreatePlayerController {
   constructor(private readonly CreatePlayerService: CreatePlayerService) {}
 
-  @Get(':pseudo')
-  async getCreatePlayer(@Param('pseudo') pseudo: string): Promise<{}> {
+  @Get()
+  async getCreatePlayer(@Query('pseudo') pseudo: string): Promise<{}> {
     if (pseudo.length <= 16) {
       return this.CreatePlayerService.getCreatePlayer(pseudo);
     } else {

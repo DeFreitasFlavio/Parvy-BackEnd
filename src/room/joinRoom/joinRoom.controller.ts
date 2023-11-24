@@ -1,15 +1,14 @@
-import { Controller, Get, Inject, Param } from '@nestjs/common';
+import { Controller, Get, Inject, Param, Query } from '@nestjs/common';
 import { JoinRoomService } from './joinRoom.service';
 
-@Controller()
+@Controller('JoinRoom')
 export class JoinRoomController {
   constructor(private readonly JoinRoomService: JoinRoomService){};
 
-  @Get('/JoinRoom/:code')
-  async getCreateRoom(@Param('code') code: string): Promise<string> {
-
-    if (code.length !== 6) {
-      return "Code incorrecte !";
+  @Get()
+  async getCreateRoom(@Query('code') code: string, @Query('idPlayer') idPlayer: string): Promise<string> {
+    if (code.length !== 6 || idPlayer.length !== 8) {
+      throw new Error("Incorrects settings !");
     } else {
       return this.JoinRoomService.getJoinRoom(code);
     }

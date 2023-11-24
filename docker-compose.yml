@@ -10,19 +10,6 @@ services:
     working_dir: /usr/src/app
     command: npm run start:dev
 
-  postgres:
-    container_name: postgres
-    image: postgres:latest
-    restart: always
-    environment:
-      POSTGRES_USER: parvy
-      POSTGRES_PASSWORD: parvy123
-      POSTGRES_DB: parvy_db
-    volumes:
-      - ./postgres_data:/var/lib/postgresql/data
-    ports:
-      - '5432:5432'
-
   redis:
     container_name: redis
     image: redis:latest
@@ -30,8 +17,8 @@ services:
     volumes:
       - ./redis_data:/data
     ports:
-      - '6000:6000'
+      - '6379:6379'
 
 volumes:
-  postgres_data:
   redis_data:
+

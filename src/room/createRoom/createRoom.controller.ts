@@ -1,11 +1,11 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { CreateRoomService } from './createRoom.service';
 
-@Controller('/CreateRoom')
+@Controller('room')
 export class CreateRoomController {
   constructor(private readonly CreateRoomService: CreateRoomService) {}
 
-  @Get()
+  @Get('create')
   getCreateRoom(@Query('idPlayer') idPlayer: string): Promise<{}> {
 
     if (idPlayer.length === 8) {

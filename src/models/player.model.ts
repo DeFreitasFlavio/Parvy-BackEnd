@@ -1,4 +1,4 @@
-import { Card } from "./card.model";
+import { Card } from './card.model';
 
 export interface Player {
     id: string; /* Id unique du joueur */

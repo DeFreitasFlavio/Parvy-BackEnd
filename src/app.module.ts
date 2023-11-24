@@ -9,7 +9,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager'
 import { CreatePlayerModule } from './player/createPlayer.module';
 
-export type CacheIORedis = Cache<ReturnType<typeof redisStore.create>>
+export type CacheIORedis = Cache<ReturnType<typeof redisStore.create>>;
 
 @Module({
   imports: [

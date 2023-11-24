@@ -1,11 +1,11 @@
 import { Controller, Get, Inject, Param, Query } from '@nestjs/common';
 import { JoinRoomService } from './joinRoom.service';
 
-@Controller('JoinRoom')
+@Controller('room')
 export class JoinRoomController {
-  constructor(private readonly JoinRoomService: JoinRoomService){};
+  constructor(private readonly JoinRoomService: JoinRoomService) {}
 
-  @Get()
+  @Get('join')
   async getCreateRoom(@Query('code') code: string, @Query('idPlayer') idPlayer: string): Promise<{}> {
     if (code.length !== 6 || idPlayer.length !== 8) {
       throw new Error("Incorrects settings !");

@@ -7,7 +7,6 @@ export class JoinRoomService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: CacheIORedis) {}
 
   async getJoinRoom(code: string, idPlayer: string): Promise<{}> {
-
     const client = this.cacheManager.store.getClient();
     
 
@@ -19,14 +18,14 @@ export class JoinRoomService {
       return { response: 'Partie en cours.'};
     }
 
-    await client.lpush(code+'/players', idPlayer);
+    await client.sadd(code+'/players', idPlayer);
 
-    const roomDatas = await client.hgetall(code);
-    const listPlayers = await client.lrange(code + '/players', 0, -1);
+    const room = await client.hgetall(code);
+    const listPlayers = await client.smembers(code + '/players');
 
     const response = {
       response: 'ok',
-      roomDatas,
+      room,
       listPlayers
     };
 

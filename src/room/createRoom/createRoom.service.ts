@@ -4,12 +4,11 @@ import { Room } from '../../models/room.model';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { CacheIORedis } from 'src/app.module';
 
-
 @Injectable()
 export class CreateRoomService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: CacheIORedis) {}
 
-  async getCreateRoom(): Promise<{}> {
+  async getCreateRoom(): Promise<unknown> {
     const client = this.cacheManager.store.getClient();
 
     const roomCode = await this.generateRoomCode();
@@ -18,16 +17,12 @@ export class CreateRoomService {
       state: 'en attente',
     };
 
-    await client.hset(
-      room.code, 
-      'code', room.code, 
-      'state', room.state
-    );
+    await client.hset(room.code, 'code', room.code, 'state', room.state);
 
     const response = {
       response: 'ok',
-      room
-    }
+      room,
+    };
 
     return response;
   }
@@ -39,7 +34,7 @@ export class CreateRoomService {
 
     let i = 0;
 
-    while(i < 1000) {
+    while (i < 1000) {
       const roomCode = [
         randomInt(min, max),
         randomInt(min, max),
@@ -55,13 +50,13 @@ export class CreateRoomService {
 
       i++;
     }
-    
+
     throw new Error('Unable to generate a room code');
   }
 
   //Vérifier que le code de room n'existe pas
   private async isRoomCodeFree(generatedCode: string): Promise<boolean> {
     const client = this.cacheManager.store.getClient();
-    return (await client.exists(generatedCode)) === 0
+    return (await client.exists(generatedCode)) === 0;
   }
 }

@@ -6,7 +6,7 @@ export class CreateRoomController {
   constructor(private readonly CreateRoomService: CreateRoomService) {}
 
   @Get('/CreateRoom')
-  getCreateRoom(): Promise<{}> {
+  getCreateRoom(): Promise<unknown> {
     return this.CreateRoomService.getCreateRoom();
   }
 }

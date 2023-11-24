@@ -14,6 +14,10 @@ export class JoinRoomService {
       throw new Error('Incorrects settings !');
     }
 
+    if (await client.sismember(idPlayer, "currentRoomCode")) {
+      throw new Error('Player already in other room');
+    }
+
     if (await client.hget(code, "state") === 'en cours') {
       return { response: 'Partie en cours.'};
     }

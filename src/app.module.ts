@@ -6,7 +6,8 @@ import { JoinRoomModule } from './room/joinRoom/joinRoom.module';
 import type { RedisOptions } from 'ioredis';
 import * as redisStore from 'cache-manager-ioredis';
 import { CacheModule } from '@nestjs/cache-manager';
-import type { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager'
+import { CreatePlayerModule } from './player/createPlayer.module';
 
 export type CacheIORedis = Cache<ReturnType<typeof redisStore.create>>;
 
@@ -20,8 +21,9 @@ export type CacheIORedis = Cache<ReturnType<typeof redisStore.create>>;
       host: 'localhost',
       port: 6379,
     }),
-    CreateRoomModule,
+    CreateRoomModule, 
     JoinRoomModule,
+    CreatePlayerModule,
   ],
   controllers: [AppController],
   providers: [AppService],

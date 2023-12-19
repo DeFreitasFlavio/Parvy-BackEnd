@@ -1,8 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { randomInt } from 'crypto';
-import { Room } from '../../models/room.model';
+import { Room, roomSchema } from '../../models/room.model';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { CacheIORedis } from 'src/app.module';
+import { playerSchema } from 'src/models/player.model';
 
 
 @Injectable()
@@ -17,12 +18,14 @@ export class CreateRoomService {
       throw new Error('Id player incorrect');
     }
 
+    const playerHost = await client.hgetall(idPlayer);
+
     const roomCode = await this.generateRoomCode();
-    const room: Room = {
+    const room = roomSchema.parse({
       code: roomCode,
       state: 'en attente',
-      playersId: [idPlayer]
-    };
+      playersId: [playerHost]
+    });
 
     // Insertion de la room créée dans le cache
     await client.hset(

@@ -1,9 +1,12 @@
-import { Card } from './card.model';
+import { cardSchema } from './card.model';
+import z from 'zod';
 
-export interface Player {
-    id: string; /* Id unique du joueur */
-    currentRoomCode?: string; /* Code de la room dans laquelle le joueur est */
-    pseudo: string; /* Pseudo du joueur */
-    hand?: Card[]; /* Main du joueur */
-    sips?: number; /* Nombre de gorgées du joueur */
-  }
+export const playerSchema = z.object({
+  id: z.string(), /* Id unique du joueur */
+  currentRoomCode: z.string().optional(), /* Code de la room dans laquelle le joueur est */
+  pseudo: z.string().optional(), /* Pseudo du joueur */
+  hand: z.array(cardSchema).optional(), /* Main du joueur */
+  sips: z.number().optional() /* Nombre de gorgées du joueur */
+});
+
+export type Player = z.infer<typeof playerSchema>

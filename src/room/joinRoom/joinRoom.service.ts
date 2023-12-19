@@ -14,7 +14,7 @@ export class JoinRoomService {
       throw new Error('Incorrects settings !');
     }
 
-    if (await client.sismember(idPlayer, "currentRoomCode")) {
+    if (await client.hget(idPlayer, "currentRoomCode")) {
       throw new Error('Player already in other room');
     }
 
@@ -23,6 +23,7 @@ export class JoinRoomService {
     }
 
     await client.sadd(code+'/players', idPlayer);
+    await client.hset(idPlayer, 'currentRoomCode', code);
 
     const room = await client.hgetall(code);
     const listPlayers = await client.smembers(code + '/players');

@@ -8,6 +8,8 @@ import * as redisStore from 'cache-manager-ioredis';
 import { CacheModule } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager'
 import { CreatePlayerModule } from './player/createPlayer.module';
+import { GameModule } from './game/game.module';
+import { CardModule } from './cards/card.module';
 
 export type CacheIORedis = Cache<ReturnType<typeof redisStore.create>>;
 
@@ -24,6 +26,8 @@ export type CacheIORedis = Cache<ReturnType<typeof redisStore.create>>;
     CreateRoomModule, 
     JoinRoomModule,
     CreatePlayerModule,
+    GameModule,
+    CardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

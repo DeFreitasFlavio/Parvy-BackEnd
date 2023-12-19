@@ -1,9 +1,12 @@
-import { Card } from './card.model';
+import { cardSchema } from './card.model';
+import z from 'zod';
 
-export interface Pyramid {
-  totalLevels?: number /* Nombre total d'étages */;
-  floor?: {
-    /* Liste des cartes sur l'étage avec son niveau */ level: number;
-    cards: [Card];
-  };
-}
+export const pyramidSchema = z.object({
+  totalLevels: z.number().optional(), /* Nombre total d'étages */
+  floor: z.object({
+    level: z.number(),
+    cards: z.array(cardSchema)
+  }).optional(), /* Liste des cartes sur l'étage avec son niveau */
+});
+
+export type Pyramid = z.infer<typeof pyramidSchema>

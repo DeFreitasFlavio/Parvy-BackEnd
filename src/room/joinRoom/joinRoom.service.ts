@@ -40,13 +40,4 @@ export class JoinRoomService {
 
     return response;
   }
-
-  getCodeRoom(room: string) {
-    const client = this.cacheManager.store.getClient();
-
-    const Room = client.hgetall(room);
-    console.log(Room);
-
-    return Room;
-  }
 }

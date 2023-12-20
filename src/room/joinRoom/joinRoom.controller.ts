@@ -10,15 +10,10 @@ export class JoinRoomController {
     @Query('code') code: string,
     @Query('idPlayer') idPlayer: string,
   ): Promise<{ response: string }> {
-    if (code.length !== 6 || idPlayer.length !== 8) {
+    if (code.length !== 6 && idPlayer.length !== 8) {
       throw new Error('Incorrects settings !');
     } else {
       return this.JoinRoomService.getJoinRoom(code, idPlayer);
     }
-  }
-
-  @Get('codeRoom')
-  getCodeRoom(@Query('room') Room: string) {
-    return this.JoinRoomService.getCodeRoom(Room);
   }
 }

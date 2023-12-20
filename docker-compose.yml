@@ -1,15 +1,5 @@
 version: '3.8'
 services:
-  app:
-    container_name: app
-    image: node:18
-    ports:
-      - 3000:3000
-    volumes:
-      - ./:/usr/src/app
-    working_dir: /usr/src/app
-    command: npm run start:dev
-
   redis:
     container_name: redis
     image: redis:latest
@@ -18,7 +8,15 @@ services:
       - ./redis_data:/data
     ports:
       - '6379:6379'
-
-volumes:
-  redis_data:
-
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - ./app:/app
+    ports:
+      - '3000:3000'
+    depends_on:
+      - redis

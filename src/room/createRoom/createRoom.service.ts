@@ -4,7 +4,6 @@ import { Room } from '../../models/room.model';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { CacheIORedis } from 'src/app.module';
 
-
 @Injectable()
 export class CreateRoomService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: CacheIORedis) {}
@@ -13,7 +12,7 @@ export class CreateRoomService {
     const client = this.cacheManager.store.getClient();
 
     // Si l'id du player passé en parametre n'existe pas dans le cache
-    if (await client.exists(idPlayer) === 0) {
+    if ((await client.exists(idPlayer)) === 0) {
       throw new Error('Id player incorrect');
     }
 
@@ -21,18 +20,17 @@ export class CreateRoomService {
     const room: Room = {
       code: roomCode,
       state: 'en attente',
-      playersId: [idPlayer]
+      playersId: [idPlayer],
     };
 
     // Insertion de la room créée dans le cache
-    await client.hset(
-      room.code, {
-      'code': room.code, 
-      'state': room.state
+    await client.hset(room.code, {
+      code: room.code,
+      state: room.state,
     });
 
     // Insertion du joueur dans le cache qui a créé la room dans une liste de joueurs liée à la room
-    await client.sadd(room.code+'/players', idPlayer, idPlayer);
+    await client.sadd(room.code + '/players', idPlayer, idPlayer);
 
     // Insertion du code room dans le cache du player qui l'a créée
     await client.hset(idPlayer, 'currentRoomCode', room.code);
@@ -43,7 +41,7 @@ export class CreateRoomService {
     const response = {
       response: 'ok',
       room,
-    }
+    };
 
     return response;
   }

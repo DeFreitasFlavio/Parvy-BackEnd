@@ -6,23 +6,28 @@ import { CacheIORedis } from 'src/app.module';
 export class JoinRoomService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: CacheIORedis) {}
 
-  async getJoinRoom(code: string, idPlayer: string): Promise<{}> {
+  async getJoinRoom(
+    code: string,
+    idPlayer: string,
+  ): Promise<{ response: string }> {
     const client = this.cacheManager.store.getClient();
-    
 
-    if (await client.exists(code) === 0 || await client.exists(idPlayer) === 0) {
+    if (
+      (await client.exists(code)) === 0 ||
+      (await client.exists(idPlayer)) === 0
+    ) {
       throw new Error('Incorrects settings !');
     }
 
-    if (await client.sismember(idPlayer, "currentRoomCode")) {
+    if (await client.sismember(idPlayer, 'currentRoomCode')) {
       throw new Error('Player already in other room');
     }
 
-    if (await client.hget(code, "state") === 'en cours') {
-      return { response: 'Partie en cours.'};
+    if ((await client.hget(code, 'state')) === 'en cours') {
+      return { response: 'Partie en cours.' };
     }
 
-    await client.sadd(code+'/players', idPlayer);
+    await client.sadd(code + '/players', idPlayer);
 
     const room = await client.hgetall(code);
     const listPlayers = await client.smembers(code + '/players');
@@ -30,9 +35,18 @@ export class JoinRoomService {
     const response = {
       response: 'ok',
       room,
-      listPlayers
+      listPlayers,
     };
 
     return response;
+  }
+
+  getCodeRoom(room: string) {
+    const client = this.cacheManager.store.getClient();
+
+    const Room = client.hgetall(room);
+    console.log(Room);
+
+    return Room;
   }
 }

@@ -10,7 +10,7 @@ export class GameController {
     if (code.length !== 6 || etages > 7) {
       throw new Error('Parameters incorrects');
     } else {
-      return this.GameService.startGame(code, etages);
+      return this.GameService.startGame(code, { etages });
     }
   }
 }

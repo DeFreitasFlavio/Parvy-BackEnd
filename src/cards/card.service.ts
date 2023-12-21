@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { CacheIORedis } from 'src/app.module';
-import { number } from 'yargs';
 
 @Injectable()
 export class CardService {
@@ -47,5 +46,36 @@ export class CardService {
         };
       }
     }
+  }
+
+  async getCardInHandPlayer(
+    code: string,
+    idPlayer: string,
+    idCard: string,
+  ): Promise<{}> {
+    const client = this.cacheManager.store.getClient();
+
+    const handPlayer = await client
+      .lrange(`${code}/players/${idPlayer}/hand`, 0, -1)
+      .then((stringifiedCards) =>
+        stringifiedCards.map((card) => JSON.parse(card)),
+      );
+
+    const player = await client.hgetall(`${idPlayer}`);
+
+    let cardToShow = {};
+    for (let card of handPlayer) {
+      if (card.id.toString() === idCard) {
+        cardToShow = card;
+      }
+    }
+
+    const response = {
+      response: 'ok',
+      card: cardToShow,
+      player,
+    };
+
+    return response;
   }
 }

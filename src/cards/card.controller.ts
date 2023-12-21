@@ -1,4 +1,4 @@
-import { Controller, Post, Query } from '@nestjs/common';
+import { Controller, Get, Post, Query } from '@nestjs/common';
 import { CardService } from './card.service';
 
 @Controller('card')
@@ -14,6 +14,19 @@ export class CardController {
       throw new Error('Parameters incorrects');
     } else {
       return this.CardService.postCurrentCard(code, numEtage);
+    }
+  }
+
+  @Get('show')
+  getCard(
+    @Query('code') code: string,
+    @Query('idPlayer') idPlayer: string,
+    @Query('idCard') idCard: string,
+  ): Promise<{}> {
+    if (code.length !== 6 || idPlayer.length !== 8 || !idCard) {
+      throw new Error('Parameters incorrects');
+    } else {
+      return this.CardService.getCardInHandPlayer(code, idPlayer, idCard);
     }
   }
 }

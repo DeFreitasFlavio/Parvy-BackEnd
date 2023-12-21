@@ -4,7 +4,6 @@ import { Player } from '../models/player.model';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { CacheIORedis } from 'src/app.module';
 
-
 @Injectable()
 export class CreatePlayerService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: CacheIORedis) {}
@@ -18,16 +17,12 @@ export class CreatePlayerService {
       pseudo: pseudo,
     };
 
-    await client.hset(
-      playerId, 
-      'id', playerId, 
-      'pseudo', pseudo
-    );
+    await client.hset(playerId, 'id', playerId, 'pseudo', pseudo);
 
     const response = {
       response: 'ok',
-      player
-    }
+      player,
+    };
 
     return response;
   }
@@ -39,7 +34,7 @@ export class CreatePlayerService {
 
     let i = 0;
 
-    while(i < 1000) {
+    while (i < 1000) {
       const playerId = [
         randomInt(min, max),
         randomInt(min, max),
@@ -57,14 +52,14 @@ export class CreatePlayerService {
 
       i++;
     }
-    
+
     throw new Error('Unable to generate a player id');
   }
 
   //Vérifier que le code de room n'existe pas
   private async isPlayerIdFree(generatedCode: string): Promise<boolean> {
     const client = this.cacheManager.store.getClient();
-    return (await client.exists(generatedCode)) === 0
+    return (await client.exists(generatedCode)) === 0;
   }
 
   async postPlayerLeaveRoom(code: string, idPlayer: string) {
@@ -74,12 +69,16 @@ export class CreatePlayerService {
       throw new Error('Invalid settings.');
     }
 
-    await client.srem(code+'/players', idPlayer);
-    await client.hdel(idPlayer, 'currentRoomCode');
+    await client.srem(code + '/players', idPlayer);
+    await client.del(idPlayer);
 
     // S'il n'y a plus de players dans la room, elle se delete
-    if (!(await client.exists(code+'/players'))) {
-      await client.del(code);
+    if (!(await client.exists(code + '/players'))) {
+      await client.del(`${code}`);
+      await client.del(`${code}/deck`);
+      await client.del(`${code}/players`);
+      const keys = await client.keys(`${code}/players/*`);
+      await client.del(keys);
     }
   }
 }

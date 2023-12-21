@@ -15,7 +15,10 @@ export class CreatePlayerController {
   }
 
   @Post('leave')
-  postPlayerLeaveRoom(@Query('code') code?: string, @Query('idPlayer') idPlayer?: string) {
+  postPlayerLeaveRoom(
+    @Query('code') code?: string,
+    @Query('idPlayer') idPlayer?: string,
+  ) {
     if (code?.length !== 6 || idPlayer?.length !== 8) {
       throw new Error('Parameters incorrects');
     } else {

@@ -6,5 +6,6 @@ import { JoinRoomService } from './joinRoom.service';
   imports: [],
   controllers: [JoinRoomController],
   providers: [JoinRoomService],
+  exports: [JoinRoomService]
 })
 export class JoinRoomModule {}

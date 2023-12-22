@@ -1,12 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { CacheIORedis } from 'src/app.module';
+import { Room } from 'src/models/room.model';
 
 @Injectable()
 export class JoinRoomService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: CacheIORedis) {}
 
-  async getJoinRoom(code: string, idPlayer: string): Promise<{}> {
+  async getJoinRoom(code: string, idPlayer: string): Promise<Room> {
     const client = this.cacheManager.store.getClient();
     
 
@@ -19,21 +20,21 @@ export class JoinRoomService {
     }
 
     if (await client.hget(code, "state") === 'en cours') {
-      return { response: 'Partie en cours.'};
+      throw new Error('Game already started');
     }
 
     await client.sadd(code+'/players', idPlayer);
     await client.hset(idPlayer, 'currentRoomCode', code);
 
-    const room = await client.hgetall(code);
+    const roomDatas = await client.hgetall(code);
+    
+    const room: Room = {
+      code: roomDatas.code,
+      state: roomDatas.state
+    }
+
     const listPlayers = await client.smembers(code + '/players');
 
-    const response = {
-      response: 'ok',
-      room,
-      listPlayers
-    };
-
-    return response;
+    return room;
   }
 }

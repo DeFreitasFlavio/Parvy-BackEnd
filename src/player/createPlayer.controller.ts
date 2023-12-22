@@ -8,7 +8,7 @@ export class CreatePlayerController {
   @Get('create')
   async getCreatePlayer(@Query('pseudo') pseudo: string): Promise<{}> {
     if (pseudo.length <= 16) {
-      return this.createPlayerService.getCreatePlayer(pseudo);
+      return this.createPlayerService.getCreatePlayer("", pseudo);
     } else {
       throw new Error('Bad pseudo player parameter');
     }

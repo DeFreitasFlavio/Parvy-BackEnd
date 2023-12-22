@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { CacheIORedis } from 'src/app.module';
-import IORedis from 'ioredis';
+import IORedis, { Cluster } from 'ioredis';
 
 export interface GameSettings {
   etages: number;
@@ -19,7 +19,7 @@ type GameParams = Required<GameSettings> & { code: string };
 
 @Injectable()
 export class GameService {
-  private client: IORedis.Redis | IORedis.Cluster;
+  private client: IORedis | Cluster;
 
   constructor(@Inject(CACHE_MANAGER) private cacheManager: CacheIORedis) {
     this.client = this.cacheManager.store.getClient();
@@ -73,6 +73,8 @@ export class GameService {
     const nbOfCardToDraw = nbCardsInHand * playerIds.length;
     const cardsToDeal = await this.client.lpop(`${code}/deck`, nbOfCardToDraw);
 
+    if (!cardsToDeal) throw new Error('no cards to deal');
+
     const cardsToPlayers = playerIds.map((playerId) => ({
       playerId,
       hand: cardsToDeal.splice(0, nbCardsInHand),
@@ -84,7 +86,7 @@ export class GameService {
       const sortedHand = this.sortByValue(toSort, values);
 
       promises.push(
-        this.client.lpush(`${code}/players/${playerId}/hand`, sortedHand),
+        this.client.lpush(`${code}/players/${playerId}/hand`, ...sortedHand),
       );
     }
 
@@ -118,12 +120,14 @@ export class GameService {
     //Création de la pyramide. Pour chaque étage, attribuer un nombre de carte
     for (let numEtage = etages; numEtage > 0; numEtage--) {
       const nbCardsByFloor = -1 * (numEtage - etages) + 1;
+
+      if(!cardsToDeal) throw new Error('no cards to deal');
       const cardsInFloor = cardsToDeal.splice(0, nbCardsByFloor);
 
       promises.push(
         this.client.lpush(
           `${code}/players/game/pyramid/floor/${nbCardsByFloor}`,
-          cardsInFloor,
+          ...cardsInFloor,
         ),
       );
     }
@@ -167,7 +171,7 @@ export class GameService {
 
     await this.client.lpush(
       `${code}/deck`,
-      deck.map((card) => JSON.stringify(card)),
+      ...deck.map((card) => JSON.stringify(card)),
     );
   }
 

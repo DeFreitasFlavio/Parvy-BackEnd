@@ -6,5 +6,6 @@ import { CreateRoomService } from './createRoom.service';
   imports: [],
   controllers: [CreateRoomController],
   providers: [CreateRoomService],
+  exports: [CreateRoomService],
 })
 export class CreateRoomModule {}

@@ -3,20 +3,18 @@ import { randomInt } from 'crypto';
 import { Room, roomSchema } from '../../models/room.model';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { CacheIORedis } from 'src/app.module';
-import { playerSchema } from 'src/models/player.model';
-
 
 @Injectable()
 export class CreateRoomService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: CacheIORedis) {}
 
-  async getCreateRoom(idPlayer: string): Promise<{}> {
+  async getCreateRoom(idPlayer: string): Promise<Room> {
     const client = this.cacheManager.store.getClient();
 
     // Si l'id du player passé en parametre n'existe pas dans le cache
-    if (await client.exists(idPlayer) === 0) {
-      throw new Error('Id player incorrect');
-    }
+    // if (await client.exists(idPlayer) === 0) {
+    //   throw new Error('Id player incorrect');
+    // }
 
     const playerHost = await client.hgetall(idPlayer);
 
@@ -43,12 +41,7 @@ export class CreateRoomService {
     // const roomCache = await client.hgetall(room.code);
     // const roomPlayersCache = await client.lrange(room.code + '/players', 0, -1);
 
-    const response = {
-      response: 'ok',
-      room,
-    }
-
-    return response;
+    return room;
   }
 
   // Génération aléatoire du code de la partie (code à 6 chiffres)

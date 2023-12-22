@@ -8,7 +8,7 @@ import type { CacheIORedis } from 'src/app.module';
 export class CreatePlayerService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: CacheIORedis) {}
 
-  async getCreatePlayer(pseudo: string): Promise<{}> {
+  async getCreatePlayer(idPlayer: string, pseudo: string): Promise<{}> {
     const client = this.cacheManager.store.getClient();
 
     const playerId = await this.generatePlayerid();

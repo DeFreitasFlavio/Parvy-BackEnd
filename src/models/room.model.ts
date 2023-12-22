@@ -9,7 +9,7 @@ export const roomSchema = z.object({
     totalCards: z.number(),
     list: z.array(cardSchema), /* Liste de carte dans le paquet de début */
   }).optional(),
-  playersId: z.array(playerSchema), /* liste des joueurs dans la partie */
+  playersId: z.array(playerSchema).optional(), /* liste des joueurs dans la partie */
 });
 
 export type Room = z.infer<typeof roomSchema>

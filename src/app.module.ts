@@ -10,6 +10,7 @@ import type { Cache } from 'cache-manager'
 import { CreatePlayerModule } from './player/createPlayer.module';
 import { GameModule } from './game/game.module';
 import { CardModule } from './cards/card.module';
+import { EventsModule } from './events/events.module';
 
 export type CacheIORedis = Cache<ReturnType<typeof redisStore.create>>;
 
@@ -28,6 +29,7 @@ export type CacheIORedis = Cache<ReturnType<typeof redisStore.create>>;
     CreatePlayerModule,
     GameModule,
     CardModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

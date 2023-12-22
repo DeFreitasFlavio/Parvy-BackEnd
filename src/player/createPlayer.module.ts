@@ -6,5 +6,6 @@ import { CreatePlayerService } from './createPlayer.service';
   imports: [],
   controllers: [CreatePlayerController],
   providers: [CreatePlayerService],
+  exports: [CreatePlayerService],
 })
 export class CreatePlayerModule {}

@@ -12,9 +12,14 @@ import { JoinRoomController } from 'src/room/joinRoom/joinRoom.controller';
 import { JoinRoomService } from 'src/room/joinRoom/joinRoom.service';
   
   export type ClientToServerEvents = {
-    createRoom: (callback: (roomCode: string) => void) => void;
+    createRoom: (
+        pseudo: string,
+        callback: (
+            roomCode: string
+            ) => void
+        ) => void;
     joinRoom: (callback: (roomCode: string) => void) => void;
-    createPlayer: (idPlayer: string, pseudo: string) => void;
+    // createPlayer: (idPlayer: string, pseudo: string) => void;
     getCurrentRoomCode: (callback: (roomCode: string) => void) => void;
     ping: (payload: string) => void;
     pingWithResponse: (
@@ -45,7 +50,7 @@ import { JoinRoomService } from 'src/room/joinRoom/joinRoom.service';
   
   export type SocketData = {
     currentRoom: string;
-    pseudo: string;
+    pseudo?: string;
   };
   
   export type Socket = RawSocket<
@@ -102,7 +107,7 @@ import { JoinRoomService } from 'src/room/joinRoom/joinRoom.service';
 
     @SubscribeMessage('createRoom')
     async createRoom(
-        @MessageBody() pseudo: PayloadForEvent<'createPlayer'>,
+      @MessageBody() pseudo: PayloadForEvent<'createRoom'>,
       @ConnectedSocket() client: Socket,
     ): Promise<string> {
 
@@ -110,7 +115,7 @@ import { JoinRoomService } from 'src/room/joinRoom/joinRoom.service';
       const { code } = await this.createRoomService.getCreateRoom(idPlayer);
       await this.createPlayerService.getCreatePlayer(idPlayer, pseudo);
 
-      const roomKey = `${code}`;
+      const roomKey = `room/${code}`;
       client.join(roomKey);
       client.data.currentRoom = roomKey;
       client.data.pseudo = pseudo;

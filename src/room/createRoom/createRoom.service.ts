@@ -11,14 +11,10 @@ export class CreateRoomService {
   async getCreateRoom(idPlayer: string): Promise<Room> {
     const client = this.cacheManager.store.getClient();
 
-    // Si l'id du player passé en parametre n'existe pas dans le cache
-    // if (await client.exists(idPlayer) === 0) {
-    //   throw new Error('Id player incorrect');
-    // }
-
-    const playerHost = await client.hgetall(idPlayer);
+    const playerHost = await client.hgetall(`player/${idPlayer}`);
 
     const roomCode = await this.generateRoomCode();
+
     const room = roomSchema.parse({
       code: roomCode,
       state: 'en attente',
@@ -27,19 +23,16 @@ export class CreateRoomService {
 
     // Insertion de la room créée dans le cache
     await client.hset(
-      room.code, {
+      `room/${room.code}`, {
       'code': room.code, 
       'state': room.state
     });
 
     // Insertion du joueur dans le cache qui a créé la room dans une liste de joueurs liée à la room
-    await client.sadd(room.code+'/players', idPlayer, idPlayer);
+    await client.lpush(`roomPlayers/${room.code}/players`, idPlayer);
 
     // Insertion du code room dans le cache du player qui l'a créée
-    await client.hset(idPlayer, 'currentRoomCode', room.code);
-
-    // const roomCache = await client.hgetall(room.code);
-    // const roomPlayersCache = await client.lrange(room.code + '/players', 0, -1);
+    await client.hset(`player/${idPlayer}`, 'currentRoomCode', room.code);
 
     return room;
   }
@@ -74,6 +67,6 @@ export class CreateRoomService {
   //Vérifier que le code de room n'existe pas
   private async isRoomCodeFree(generatedCode: string): Promise<boolean> {
     const client = this.cacheManager.store.getClient();
-    return (await client.exists(generatedCode)) === 0;
+    return (await client.exists(`room/${generatedCode}`)) === 0;
   }
 }

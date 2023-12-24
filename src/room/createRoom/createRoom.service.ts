@@ -21,18 +21,28 @@ export class CreateRoomService {
       playersId: [playerHost]
     });
 
-    // Insertion de la room créée dans le cache
-    await client.hset(
-      `room/${room.code}`, {
-      'code': room.code, 
-      'state': room.state
-    });
+    const promises: Promise<unknown>[] = [];
 
-    // Insertion du joueur dans le cache qui a créé la room dans une liste de joueurs liée à la room
-    await client.lpush(`roomPlayers/${room.code}/players`, idPlayer);
+    promises.push(
+      // Insertion de la room créée dans le cache
+      client.hset(
+        `room/${room.code}`, {
+        'code': room.code, 
+        'state': room.state
+      })
+    );
 
-    // Insertion du code room dans le cache du player qui l'a créée
-    await client.hset(`player/${idPlayer}`, 'currentRoomCode', room.code);
+    promises.push(
+      // Insertion du joueur dans le cache qui a créé la room dans une liste de joueurs liée à la room
+      client.lpush(`roomPlayers/${room.code}`, idPlayer)
+    )
+
+    promises.push(
+      // Insertion du code room dans le cache du player qui l'a créée
+      client.hset(`player/${idPlayer}`, 'currentRoomCode', room.code)
+    )
+
+    await Promise.all(promises);
 
     return room;
   }

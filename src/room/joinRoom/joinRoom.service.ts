@@ -1,40 +1,40 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { CacheIORedis } from 'src/app.module';
-import { Room } from 'src/models/room.model';
 
 @Injectable()
 export class JoinRoomService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: CacheIORedis) {}
 
-  async getJoinRoom(code: string, idPlayer: string): Promise<Room> {
+  async getJoinRoom(code: string, idPlayer: string): Promise<boolean> {
     const client = this.cacheManager.store.getClient();
     
+    let joined = true;
 
-    if (await client.exists(code) === 0 || await client.exists(idPlayer) === 0) {
+    if (await client.exists(`room/${code}`) === 0 || await client.exists(`player/${idPlayer}`) === 0) {
+      joined = false;
       throw new Error('Incorrects settings !');
     }
 
-    if (await client.hget(idPlayer, "currentRoomCode")) {
+    console.log(`joinGame ${idPlayer}`);
+
+    if (await client.hget(`player/${idPlayer}`, "currentRoomCode")) {
+      joined = false;
       throw new Error('Player already in other room');
     }
 
-    if (await client.hget(code, "state") === 'en cours') {
+    if (await client.hget(`room/${code}`, "state") === 'en cours') {
+      joined = false;
       throw new Error('Game already started');
     }
 
-    await client.sadd(code+'/players', idPlayer);
-    await client.hset(idPlayer, 'currentRoomCode', code);
-
-    const roomDatas = await client.hgetall(code);
-    
-    const room: Room = {
-      code: roomDatas.code,
-      state: roomDatas.state
+    try {
+      await client.lpush(`roomPlayers/${code}`, idPlayer);
+      await client.hset(`player/${idPlayer}`, 'currentRoomCode', code);
+    } catch {
+      joined = false;
     }
-
-    const listPlayers = await client.smembers(code + '/players');
-
-    return room;
+    
+    return joined;
   }
 }

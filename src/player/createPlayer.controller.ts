@@ -22,4 +22,13 @@ export class CreatePlayerController {
       return this.createPlayerService.postPlayerLeaveRoom(code, idPlayer);
     }
   }
+
+  @Get('players')
+  getPlayersInRoom(@Query('code') code?: string) {
+    if (code?.length !== 6) {
+      throw new Error('Parameters incorrects');
+    } else {
+      return this.createPlayerService.getPlayersInRoom(code);
+    }
+  }
 }

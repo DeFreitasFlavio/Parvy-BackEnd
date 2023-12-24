@@ -44,4 +44,21 @@ export class CreatePlayerService {
       await client.del(keys);
     }
   }
+
+  async getPlayersInRoom(code: string): Promise<string[]> {
+    const client = this.cacheManager.store.getClient();
+
+    const listPlayers = await client.lrange(`roomPlayers/${code}`, 0, -1);
+
+    const playerPseudoList: string[] = [];
+
+    for (const idPlayer of listPlayers) {
+      const pseudo: string | null = await client.hget(`player/${idPlayer}`, 'pseudo');
+      if (pseudo !== null) {
+        playerPseudoList.push(pseudo);
+      }
+    }
+
+    return playerPseudoList
+  }
 }

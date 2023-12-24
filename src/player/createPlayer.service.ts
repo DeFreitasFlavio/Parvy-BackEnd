@@ -24,25 +24,38 @@ export class CreatePlayerService {
     return response;
   }
 
-  async postPlayerLeaveRoom(code: string, idPlayer: string) {
+  async postPlayerLeaveRoom(code: string, idPlayer: string): Promise<boolean> {
     const client = this.cacheManager.store.getClient();
+    console.log('leave');
+    let isLeaved = true;
 
     if (!(await client.exists(`room/${code}`)) || !(await client.exists(`player/${idPlayer}`))) {
+      isLeaved = false;
       throw new Error('Invalid settings.');
     }
 
-    await client.lrem(`roomPlayer/${code}`, -1, idPlayer);
-    await client.del(`player/${idPlayer}`);
+    try{
+      await client.lrem(`roomPlayers/${code}`, 1, idPlayer);
+      await client.del(`player/${idPlayer}`);
+    } catch {
+      isLeaved = false;
+    }
 
     // S'il n'y a plus de players dans la room, elle se delete
-    if (!(await client.exists(code + '/players'))) {
-      await client.del(`room/${code}`);
-      await client.del(`roomDeck/${code}/deck`);
-      await client.del(`roomPlayers${code}`);
-      /** toDo */
-      const keys = await client.keys(`roomPlayers/${code}/players/*`);
-      await client.del(keys);
+    if (!(await client.exists(`roomPlayers/${code}`))) {
+      try {
+        await client.del(`room/${code}`);
+        await client.del(`roomDeck/${code}`);
+  
+        /** toDo delete cards in hand player */
+        const keys = await client.keys(`roomPlayers/${code}/players/*`);
+        await client.del(keys);
+      } catch {
+        isLeaved = false;
+      }
     }
+
+    return isLeaved;
   }
 
   async getPlayersInRoom(code: string): Promise<string[]> {

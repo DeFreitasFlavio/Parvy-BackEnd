@@ -22,6 +22,11 @@ import { JoinRoomService } from 'src/room/joinRoom/joinRoom.service';
         roomCode: string,
         callback: () => void
     ) => void;
+    leaveRoom: (
+        callback: (
+            leaved: boolean
+        ) => void
+    ) => void;
     getCurrentRoomCode: (
         callback: (
             roomCode: string
@@ -153,6 +158,25 @@ import { JoinRoomService } from 'src/room/joinRoom/joinRoom.service';
       }
 
       return isJoined;
+    }
+
+    @SubscribeMessage('leaveRoom')
+    async leaveRoom(
+        @ConnectedSocket() client: Socket,
+    ): Promise<boolean> {
+
+        const idPlayer = client.id;
+        const roomCode = client.data.currentRoom;
+        let isLeaved = true;
+
+        try {
+            await this.createPlayerService.postPlayerLeaveRoom(roomCode, idPlayer);
+            client.data.currentRoom = "";
+        } catch {
+            isLeaved = false;
+        }
+
+        return isLeaved;
     }
 
     @SubscribeMessage('getCurrentRoomCode')

@@ -216,9 +216,8 @@ import { CardService } from 'src/cards/card.service';
         client.data.state = 'en cours';
         client.data.maxFloors = etages;
 
-        // Pourquoi cet emit ne renvoie pas l'url ??
-        const url = '/test';
-        this.server.to(roomCode).emit('redirectInGame', 'url');
+        const url = '/pyramide/game';
+        this.server.to(roomCode).emit('redirectInGame', url);
         
         return isStarted;
     }

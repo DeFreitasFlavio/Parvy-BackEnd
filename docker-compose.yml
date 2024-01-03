@@ -1,24 +1,28 @@
 version: '3.8'
 services:
-  app:
-    container_name: app
-    image: node:18
-    ports:
-      - 3000:3000
+  api:
+    build:
+      dockerfile: Dockerfile
+      context: .
+
+      target: development
     volumes:
-      - ./:/usr/src/app
-    working_dir: /usr/src/app
+      - .:/usr/src/app
+
     command: npm run start:dev
+    ports:
+      - 3001:3010
+
+    depends_on:
+      - redis
 
   redis:
     container_name: redis
-    image: redis:latest
-    restart: always
-    volumes:
-      - ./redis_data:/data
+    image: redis
     ports:
       - '6379:6379'
-
+    volumes:
+      - ./redis_data:/data
 volumes:
-  redis_data:
-
+  redis:
+    driver: local

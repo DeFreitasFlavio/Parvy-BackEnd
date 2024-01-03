@@ -8,12 +8,13 @@ export class CardController {
   @Post('return')
   postCurrentCard(
     @Query('code') code: string,
+    @Query('idCode') idCard: string,
     @Query('numEtage') numEtage: number,
   ) {
     if (code.length !== 6 || !numEtage) {
       throw new Error('Parameters incorrects');
     } else {
-      return this.CardService.postCurrentCard(code, numEtage);
+      return this.CardService.postCurrentCard(code, idCard);
     }
   }
 

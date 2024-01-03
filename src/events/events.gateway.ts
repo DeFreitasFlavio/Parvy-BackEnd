@@ -9,6 +9,8 @@ import {
 import { CreatePlayerService } from 'src/player/createPlayer.service';
 import { CreateRoomService } from 'src/room/createRoom/createRoom.service';
 import { JoinRoomService } from 'src/room/joinRoom/joinRoom.service';
+import { GameService } from 'src/game/game.service';
+import { CardService } from 'src/cards/card.service';
   
   export type ClientToServerEvents = {
     createRoom: (
@@ -27,6 +29,11 @@ import { JoinRoomService } from 'src/room/joinRoom/joinRoom.service';
             leaved: boolean
         ) => void
     ) => void;
+    startGamePyramid: (
+        callback: (
+            isStarted: boolean
+        ) => void
+    ) => void;
     getCurrentRoomCode: (
         callback: (
             roomCode: string
@@ -36,6 +43,23 @@ import { JoinRoomService } from 'src/room/joinRoom/joinRoom.service';
         callback: (
             playerList: string[]
         ) => void
+    ) => void;
+    getPseudo: (
+        callback: (
+            pseudo: string
+        ) => void
+    ) => void;
+    getNextCard: (
+      idCard: string,
+      callback: (
+        currentCard: object
+      ) => void
+    ) => void;
+    showCard: (
+      idCard: string,
+      callback: (
+        currentCard: object
+      ) => void
     ) => void;
     ping: (payload: string) => void;
     pingWithResponse: (
@@ -59,12 +83,16 @@ import { JoinRoomService } from 'src/room/joinRoom/joinRoom.service';
   export type ServerToClientEvents = {
     pong: (data: string) => void,
     playersUpdated: (data: string[]) => void,
+    redirectInGame: (data: string) => void,
+    getCurrentCard: (data: object) => void,
     // ex: updateBoard pour tout le monde quand un joueur fait une action
   };
   
   export type SocketData = {
     currentRoom: string;
     pseudo?: string;
+    state?: string;
+    maxFloors?: number;
   };
   
   export type Socket = RawSocket<
@@ -80,6 +108,8 @@ import { JoinRoomService } from 'src/room/joinRoom/joinRoom.service';
         private readonly createPlayerService: CreatePlayerService, 
         private readonly createRoomService: CreateRoomService, 
         private readonly joinRoomService: JoinRoomService,
+        private readonly gameService: GameService,
+        private readonly cardService: CardService
         ) {}
   
     @WebSocketServer()
@@ -96,9 +126,6 @@ import { JoinRoomService } from 'src/room/joinRoom/joinRoom.service';
       @ConnectedSocket() client: Socket,
     ) {
       // quand le client emet Ping, cette fonction est appelée
-      console.log('ping', payload);
-
-    //   this.createPlayerService.getCreatePlayer(payload);
       client.join('room/${code}');
       client.data.currentRoom = 'room/${code}';
 
@@ -115,7 +142,6 @@ import { JoinRoomService } from 'src/room/joinRoom/joinRoom.service';
       @ConnectedSocket() client: Socket,
     ): string {
       // quand le client emet Ping, cette fonction est appelée
-      console.log('pingWithResponse', payload)
       return 'pong';
     }
 
@@ -133,8 +159,6 @@ import { JoinRoomService } from 'src/room/joinRoom/joinRoom.service';
       client.join(roomKey);
       client.data.currentRoom = roomKey;
       client.data.pseudo = pseudo;
-
-      console.log(client.data);
 
       return code;
     }
@@ -179,6 +203,26 @@ import { JoinRoomService } from 'src/room/joinRoom/joinRoom.service';
         return isLeaved;
     }
 
+    @SubscribeMessage('startGamePyramid')
+    async startGamePyramid(
+        @ConnectedSocket() client: Socket,
+    ): Promise<boolean> {
+        
+        let isStarted = true;
+        let etages = 7;
+        const roomCode = client.data.currentRoom;
+        await this.gameService.startGame(roomCode, { etages });
+
+        client.data.state = 'en cours';
+        client.data.maxFloors = etages;
+
+        // Pourquoi cet emit ne renvoie pas l'url ??
+        const url = '/test';
+        this.server.to(roomCode).emit('redirectInGame', 'url');
+        
+        return isStarted;
+    }
+
     @SubscribeMessage('getCurrentRoomCode')
     async getCurrentRoomCode(
       @ConnectedSocket() client: Socket,
@@ -193,6 +237,43 @@ import { JoinRoomService } from 'src/room/joinRoom/joinRoom.service';
         const currentRoomCode = client.data.currentRoom;
         const playersList = await this.createPlayerService.getPlayersInRoom(currentRoomCode);
         this.server.to(currentRoomCode).emit('playersUpdated', playersList);
+
         return playersList;
+    }
+
+    @SubscribeMessage('getPseudo')
+    async getMyPseudo(
+        @ConnectedSocket() client: Socket,
+    ): Promise<string | undefined> {
+        return client.data.pseudo;
+    }
+
+    // A vérifier
+    @SubscribeMessage('getNextCard')
+    async getNextCard(
+      @MessageBody() idCard: PayloadForEvent<'createRoom'>,
+      @ConnectedSocket() client: Socket,
+    ): Promise<object | undefined> {
+      const currentRoomCode = client.data.currentRoom;
+
+      const currentCard = await this.cardService.postCurrentCard(currentRoomCode, idCard);
+      this.server.to(currentRoomCode).emit('getCurrentCard', currentCard);
+      
+      return currentCard;
+    }
+
+    // A vérifier
+    @SubscribeMessage('showCard')
+    async showCard(
+      @MessageBody() idCard: PayloadForEvent<'createRoom'>,
+      @ConnectedSocket() client: Socket,
+    ): Promise<object | undefined> {
+      const idPlayer = client.id;
+      const currentRoomCode = client.data.currentRoom;
+
+      const card = await this.cardService.getCardInHandPlayer(currentRoomCode, idPlayer, idCard);
+      this.server.to(currentRoomCode).emit('getCurrentCard', card);
+
+      return card;
     }
 }

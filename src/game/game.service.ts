@@ -9,7 +9,6 @@ export interface GameSettings {
 }
 
 export interface Response {
-  response: string;
   room?: {};
   game?: {};
   players?: {};
@@ -26,6 +25,7 @@ export class GameService {
   }
 
   async startGame(code: string, settings: GameSettings): Promise<Response> {
+
     const params: GameParams = {
       nbCardsInHand: 4,
       ...settings,
@@ -48,13 +48,13 @@ export class GameService {
       'K',
     ];
 
-    await this.client.hset(code, 'state', 'en cours');
-    await this.client.hset(code, 'etages', params.etages);
+    await this.client.hset(`room/${code}`, 'state', 'en cours');
+    await this.client.hset(`room/${code}`, 'etages', params.etages);
 
     await this.createCards(code, values);
 
-    const playerIds = await this.client.smembers(
-      code + '/players',
+    const playerIds = await this.client.lrange(
+      `roomPlayers/${code}`, 0, -1
     ); /* liste des id players */
 
     await this.dealHands(playerIds, params, values);
@@ -71,14 +71,17 @@ export class GameService {
   ) {
     //Pour chaque joueur dans la room retirer des cartes de la pioche et lui donner les cartes dans la main
     const nbOfCardToDraw = nbCardsInHand * playerIds.length;
-    const cardsToDeal = await this.client.lpop(`${code}/deck`, nbOfCardToDraw);
+    const cardsToDeal = await this.client.lpop(`roomDeck/${code}`, nbOfCardToDraw);
 
     if (!cardsToDeal) throw new Error('no cards to deal');
 
-    const cardsToPlayers = playerIds.map((playerId) => ({
-      playerId,
-      hand: cardsToDeal.splice(0, nbCardsInHand),
-    }));
+    let cardsToPlayers = [];
+    for (const playerId of playerIds) {
+      cardsToPlayers.push({
+        playerId,
+        hand: cardsToDeal.splice(0, nbCardsInHand),
+      });
+    }
 
     const promises: Promise<unknown>[] = [];
     for (const { playerId, hand } of cardsToPlayers) {
@@ -86,7 +89,7 @@ export class GameService {
       const sortedHand = this.sortByValue(toSort, values);
 
       promises.push(
-        this.client.lpush(`${code}/players/${playerId}/hand`, ...sortedHand),
+        this.client.lpush(`roomPlayersHand/${code}/player/${playerId}`, ...sortedHand),
       );
     }
 
@@ -102,7 +105,7 @@ export class GameService {
       nbCardsInPyramid += i;
     }
 
-    const deckKey = `${code}/deck`;
+    const deckKey = `roomDeck/${code}`;
 
     const remainingCardLength = await this.client.llen(deckKey);
     const nbPlayerCards = playerIds.length * nbCardsInHand;
@@ -112,7 +115,7 @@ export class GameService {
     }
 
     const cardsToDeal = await this.client.lpop(
-      `${code}/deck`,
+      `roomDeck/${code}`,
       nbCardsInPyramid,
     );
 
@@ -126,7 +129,7 @@ export class GameService {
 
       promises.push(
         this.client.lpush(
-          `${code}/players/game/pyramid/floor/${nbCardsByFloor}`,
+          `roomPyramidFloors/${code}/floor/${nbCardsByFloor}`,
           ...cardsInFloor,
         ),
       );
@@ -170,7 +173,7 @@ export class GameService {
     }
 
     await this.client.lpush(
-      `${code}/deck`,
+      `roomDeck/${code}`,
       ...deck.map((card) => JSON.stringify(card)),
     );
   }
@@ -196,14 +199,14 @@ export class GameService {
     { code, etages }: GameParams,
   ): Promise<Response> {
     //Récupération des informations de la room
-    const roomPromise = this.client.hgetall(`${code}`);
+    const roomPromise = this.client.hgetall(`room/${code}`);
 
     const gamePromises: Promise<unknown>[] = [];
     //Récupération de chaque étage de la pyramide
     for (let etage = etages; etage >= 1; etage--) {
       gamePromises.push(
         this.client
-          .lrange(`${code}/players/game/pyramid/floor/${etage}`, 0, -1)
+          .lrange(`roomPyramidFloors/${code}/floor/${etage}`, 0, -1)
           .then((stringifiedCards) =>
             stringifiedCards.map((card) => JSON.parse(card)),
           ),
@@ -214,10 +217,10 @@ export class GameService {
     //Récupération de la liste des joueurs et de leur main
     for (let playerId of playerIds) {
       playerPromises.push(
-        this.client.hgetall(`${playerId}`).then(async (player) => ({
+        this.client.hgetall(`player/${playerId}`).then(async (player) => ({
           ...player,
           hand: await this.client
-            .lrange(`${code}/players/${playerId}/hand`, 0, -1)
+            .lrange(`roomPlayersHand/${code}/players/${playerId}`, 0, -1)
             .then((stringifiedCards) =>
               stringifiedCards.map((card) => JSON.parse(card)),
             ),
@@ -232,7 +235,6 @@ export class GameService {
     ]);
 
     return {
-      response: 'ok',
       room,
       game,
       players,

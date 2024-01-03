@@ -47,9 +47,10 @@ export class CreatePlayerService {
         await client.del(`room/${code}`);
         await client.del(`roomDeck/${code}`);
   
-        /** toDo delete cards in hand player */
-        const keys = await client.keys(`roomPlayers/${code}/players/*`);
+        const keys = await client.keys(`roomPlayersHand/${code}/players/*`);
         await client.del(keys);
+        const keysHands = await client.keys(`roomPyramidFloors/${code}/floor/*`);
+        await client.del(keysHands);
       } catch {
         isLeaved = false;
       }

@@ -7,45 +7,53 @@ import { Card } from 'src/models/card.model';
 export class CardService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: CacheIORedis) {}
 
-  async postCurrentCard(code: string, numEtage: number) {
+  async postCurrentCard(code: string, idCard: string): Promise<{}> {
     const client = this.cacheManager.store.getClient();
 
-    const maxEtages = await client.hget(`${code}`, 'etages');
+    let etage: number|unknown = 1;
+    if (await client.hexists(`room/${code}`, 'currentFloor') === 0) {
+      etage = await client.hset(`room/${code}`, 'currentFloor', 1);
+    } else {
+      etage = await client.hget(`room/${code}`, 'currentFloor');
+    }
+
+    const maxEtages = await client.hget(`room/${code}`, 'etages');
     if (!maxEtages) {
       throw new Error('No max floor');
     }
 
-    const maxEtagesNumber = parseInt(maxEtages, 10);
-    const tabEtages = [];
-    for (let i = maxEtagesNumber; i >= 1; i--) {
-      tabEtages.push(i);
-    }
-
-    let etage = 0;
-    for (let index = 0; index < maxEtagesNumber; index++) {
-      if (tabEtages[index] == numEtage) {
-        etage = index + 1;
-      }
-    }
-
-    const stringifiedCards = await client
-      .lrange(`${code}/players/game/pyramid/floor/${etage}`, 0, -1)
+    let stringifiedCards = await client
+      .lrange(`roomPyramidFloors/${code}/floor/${etage}`, 0, -1)
     
-    const cards = stringifiedCards.map((card) => JSON.parse(card) as Card);
+    let cards = stringifiedCards.map((card) => JSON.parse(card) as Card);
 
-    for (const card of cards) {
-      if (card.face === 0) {
-        card.face = 1;
+    for (let i = 0; i < cards.length; i++) {
+      let card = cards[i];
+      if (card.id === idCard) {
+
+        if (i+1 > cards.length) {
+          stringifiedCards = await client
+            .lrange(`roomPyramidFloors/${code}/floor/${etage}`, 0, -1)
+    
+          cards = stringifiedCards.map((card) => JSON.parse(card) as Card);
+
+          card = cards[0];
+        } else {
+          card = cards[i+1];
+        }
+
         await client.lpush(
-          `${code}/players/game/pyramid/floor/${etage}`,
+          `roomPyramidFloors/${code}/floor/${etage}`,
           ...stringifiedCards,
         );
+        
         return {
-          currentCard: card,
-          floor: cards,
+          card,
         };
       }
     }
+
+    return {};
   }
 
   async getCardInHandPlayer(
@@ -56,12 +64,12 @@ export class CardService {
     const client = this.cacheManager.store.getClient();
 
     const handPlayer = await client
-      .lrange(`${code}/players/${idPlayer}/hand`, 0, -1)
+      .lrange(`roomPlayersHand/${code}/players/${idPlayer}`, 0, -1)
       .then((stringifiedCards) =>
         stringifiedCards.map((card) => JSON.parse(card)),
       );
 
-    const player = await client.hgetall(`${idPlayer}`);
+    const player = await client.hgetall(`player/${idPlayer}`);
 
     let cardToShow = {};
     for (let card of handPlayer) {
@@ -71,9 +79,7 @@ export class CardService {
     }
 
     const response = {
-      response: 'ok',
-      card: cardToShow,
-      player,
+      cardToShow
     };
 
     return response;

@@ -253,7 +253,7 @@ import { Card } from 'src/models/card.model';
         return client.data.pseudo;
     }
 
-    // A vérifier
+    // Fonctionne uniquement sur le premier étage et sur la premiere carte du second
     @SubscribeMessage('getNextCard')
     async getNextCard(
       @ConnectedSocket() client: Socket,
@@ -261,7 +261,7 @@ import { Card } from 'src/models/card.model';
       const currentRoomCode = client.data.currentRoom;
 
       const currentCard = await this.cardService.postCurrentCard(currentRoomCode);
-      
+
       this.server.to(currentRoomCode).emit('getCurrentCard', currentCard);
       
       return currentCard;

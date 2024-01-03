@@ -21,7 +21,7 @@ export type CacheIORedis = Cache<ReturnType<typeof redisStore.create>>;
       store: redisStore,
 
       // Store-specific configuration:
-      host: 'redis',
+      host: 'localhost',
       port: 6379,
     }),
     CreateRoomModule,

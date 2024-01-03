@@ -14,7 +14,7 @@ export class CardController {
     if (code.length !== 6 || !numEtage) {
       throw new Error('Parameters incorrects');
     } else {
-      return this.CardService.postCurrentCard(code, idCard);
+      return this.CardService.postCurrentCard(code);
     }
   }
 

@@ -11,6 +11,7 @@ import { CreateRoomService } from 'src/room/createRoom/createRoom.service';
 import { JoinRoomService } from 'src/room/joinRoom/joinRoom.service';
 import { GameService } from 'src/game/game.service';
 import { CardService } from 'src/cards/card.service';
+import { Card } from 'src/models/card.model';
   
   export type ClientToServerEvents = {
     createRoom: (
@@ -50,7 +51,6 @@ import { CardService } from 'src/cards/card.service';
         ) => void
     ) => void;
     getNextCard: (
-      idCard: string,
       callback: (
         currentCard: object
       ) => void
@@ -59,6 +59,11 @@ import { CardService } from 'src/cards/card.service';
       idCard: string,
       callback: (
         currentCard: object
+      ) => void
+    ) => void;
+    getMyCards: (
+      callback: (
+        hand: object[]
       ) => void
     ) => void;
     ping: (payload: string) => void;
@@ -93,6 +98,7 @@ import { CardService } from 'src/cards/card.service';
     pseudo?: string;
     state?: string;
     maxFloors?: number;
+    hand?: object[];
   };
   
   export type Socket = RawSocket<
@@ -250,12 +256,11 @@ import { CardService } from 'src/cards/card.service';
     // A vérifier
     @SubscribeMessage('getNextCard')
     async getNextCard(
-      @MessageBody() idCard: PayloadForEvent<'createRoom'>,
       @ConnectedSocket() client: Socket,
     ): Promise<object | undefined> {
       const currentRoomCode = client.data.currentRoom;
 
-      const currentCard = await this.cardService.postCurrentCard(currentRoomCode, idCard);
+      const currentCard = await this.cardService.postCurrentCard(currentRoomCode);
       this.server.to(currentRoomCode).emit('getCurrentCard', currentCard);
       
       return currentCard;
@@ -274,5 +279,19 @@ import { CardService } from 'src/cards/card.service';
       this.server.to(currentRoomCode).emit('getCurrentCard', card);
 
       return card;
+    }
+
+    @SubscribeMessage('getMyCards')
+    async getMyCards(
+        @ConnectedSocket() client: Socket,
+    ): Promise<object[]> {      
+      const idPlayer = client.id;
+      const currentRoomCode = client.data.currentRoom;
+      
+      const hand = await this.createPlayerService.getCardsInMyHand(currentRoomCode, idPlayer);
+      
+      client.data.hand = hand;
+
+      return hand;
     }
 }

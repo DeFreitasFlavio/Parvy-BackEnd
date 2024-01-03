@@ -7,15 +7,11 @@ import { Card } from 'src/models/card.model';
 export class CardService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: CacheIORedis) {}
 
-  async postCurrentCard(code: string, idCard: string): Promise<{}> {
+  async postCurrentCard(code: string): Promise<{}> {
     const client = this.cacheManager.store.getClient();
 
-    let etage: number|unknown = 1;
-    if (await client.hexists(`room/${code}`, 'currentFloor') === 0) {
-      etage = await client.hset(`room/${code}`, 'currentFloor', 1);
-    } else {
-      etage = await client.hget(`room/${code}`, 'currentFloor');
-    }
+    let etage: string|null = await client.hget(`room/${code}`, 'currentFloor');
+    let currentCard: Card|null = await this.getCurrentCard(code);
 
     const maxEtages = await client.hget(`room/${code}`, 'etages');
     if (!maxEtages) {
@@ -29,7 +25,7 @@ export class CardService {
 
     for (let i = 0; i < cards.length; i++) {
       let card = cards[i];
-      if (card.id === idCard) {
+      if (currentCard && card.id === currentCard.id) {
 
         if (i+1 > cards.length) {
           stringifiedCards = await client
@@ -54,6 +50,19 @@ export class CardService {
     }
 
     return {};
+  }
+
+  async getCurrentCard(code: string): Promise<Card|null> {
+    const client = this.cacheManager.store.getClient();
+
+    const stringifyCurrentCard: string|null = await client.hget(`room/${code}`, 'currentCard');
+    if (stringifyCurrentCard) {
+      let currentCard = JSON.parse(stringifyCurrentCard);
+
+      return currentCard;
+    }
+
+    return null;
   }
 
   async getCardInHandPlayer(

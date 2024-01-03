@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Player } from '../models/player.model';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { CacheIORedis } from 'src/app.module';
+import { Card } from 'src/models/card.model';
 
 @Injectable()
 export class CreatePlayerService {
@@ -74,5 +75,14 @@ export class CreatePlayerService {
     }
 
     return playerPseudoList
+  }
+
+  async getCardsInMyHand(code: string, idPlayer: string): Promise<object[]> {
+    const client = this.cacheManager.store.getClient();
+    const myHand = await client.lrange(`roomPlayersHand/${code}/player/${idPlayer}`, 0, -1)
+      .then((stringifiedCards) => stringifiedCards.map((card) => JSON.parse(card)),
+    );
+
+    return myHand
   }
 }

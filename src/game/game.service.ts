@@ -135,6 +135,8 @@ export class GameService {
       );
     }
 
+    await this.client.hset(`room/${code}`, 'currentFloor', 1);
+
     await Promise.all(promises);
   }
 

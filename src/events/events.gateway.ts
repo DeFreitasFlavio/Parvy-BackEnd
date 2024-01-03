@@ -261,6 +261,7 @@ import { Card } from 'src/models/card.model';
       const currentRoomCode = client.data.currentRoom;
 
       const currentCard = await this.cardService.postCurrentCard(currentRoomCode);
+      
       this.server.to(currentRoomCode).emit('getCurrentCard', currentCard);
       
       return currentCard;

@@ -9,8 +9,12 @@ export class CardService {
 
   async postCurrentCard(code: string): Promise<{}> {
     const client = this.cacheManager.store.getClient();
-
-    let etage: string|null = await client.hget(`room/${code}`, 'currentFloor');
+  
+    let etage: number|string|null = await client.hget(`room/${code}`, 'currentFloor');
+    const maxFloors: string|null = await client.hget(`room/${code}`, 'etages');
+    if (etage && maxFloors) {
+      etage = this.calculateFloorNumber(parseInt(maxFloors), parseInt(etage));
+    }
     let currentCard: Card|null = await this.getCurrentCard(code);
 
     const maxEtages = await client.hget(`room/${code}`, 'etages');
@@ -23,39 +27,65 @@ export class CardService {
     
     let cards = stringifiedCards.map((card) => JSON.parse(card) as Card);
 
+    let card: Card = Object();
     for (let i = 0; i < cards.length; i++) {
-      let card = cards[i];
-      if (currentCard && card.id === currentCard.id) {
+      card = cards[i];
+      if (currentCard) {
+        // S'il y a une carte courante
+        if (card.id === currentCard.id) {
+          // Si l'id de la carte courante dans redis est le meme que la carte récupérée alors on va récupérer la carte suivante.
+          if (i+1 > cards.length) {
+            // Si on dépasse la taille de la ligne, on passe à la suivante et on récupère la première carte
+            stringifiedCards = await client
+              .lrange(`roomPyramidFloors/${code}/floor/${etage}`, 0, -1);
 
-        if (i+1 > cards.length) {
-          stringifiedCards = await client
-            .lrange(`roomPyramidFloors/${code}/floor/${etage}`, 0, -1)
-    
-          cards = stringifiedCards.map((card) => JSON.parse(card) as Card);
+            cards = stringifiedCards.map((card) => JSON.parse(card) as Card);
 
-          card = cards[0];
-        } else {
-          card = cards[i+1];
+            card = cards[0];
+            const redisCard = JSON.stringify(card);
+            await client.hset(`room/${code}`, 'currentCard', redisCard);
+
+          } else {
+            // On récupère la carte qui vient après la carte courante
+            card = cards[i+1];
+            const redisCard = JSON.stringify(card);
+            await client.hset(`room/${code}`, 'currentCard', redisCard);
+          }
         }
 
-        await client.lpush(
-          `roomPyramidFloors/${code}/floor/${etage}`,
-          ...stringifiedCards,
-        );
-        
-        return {
-          card,
-        };
+      } else {
+        //Si aucune carte n'est dans les cartes courantes
+        stringifiedCards = await client
+        .lrange(`roomPyramidFloors/${code}/floor/${etage}`, 0, -1)
+
+        cards = stringifiedCards.map((card) => JSON.parse(card) as Card);
+
+        card = cards[0];
+
+        const redisCard: string = JSON.stringify(card);
+
+        await client.hset(`room/${code}`, 'currentCard', redisCard);
       }
     }
 
-    return {};
+    const stringifiedFinalCard: string|null = await client.hget(`room/${code}`, 'currentCard');
+    if (!stringifiedFinalCard) {
+      throw new Error('No final card');
+    }
+    const finalCard: Card = JSON.parse(stringifiedFinalCard);
+    return finalCard;
+  }
+
+  calculateFloorNumber(maxFloors: number, currentFloor: number): number {
+    const floor = (currentFloor - (maxFloors + 1)) * (-1);
+    return floor;
   }
 
   async getCurrentCard(code: string): Promise<Card|null> {
     const client = this.cacheManager.store.getClient();
 
     const stringifyCurrentCard: string|null = await client.hget(`room/${code}`, 'currentCard');
+
     if (stringifyCurrentCard) {
       let currentCard = JSON.parse(stringifyCurrentCard);
 
